@@ -8,7 +8,7 @@ def passthrough(x, **kwargs):
 
 def ELUCons(elu, nchan):
     if elu:
-        return nn.ELU(inplace=True)
+        return nn.ELU(inplace=False)
     else:
         return nn.PReLU(nchan)
 
@@ -36,7 +36,6 @@ class LUConv(nn.Module):
         self.bn1 = nn.InstanceNorm3d(32)
 
     def forward(self, x):
-        print(x.shape)
         x = self.conv1(x)
         x = self.bn1(x)
         out = self.relu1(x)
@@ -63,10 +62,8 @@ class InputTransition(nn.Module):
         out = self.bn1(x)
         # split input in to 16 channels
         # x16 = torch.cat((x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x), 0)
-        # print(x16.shape)
         # out = self.relu1(torch.add(out, x16))
         out = self.relu1(out)
-        # print(out.shape)
         return out
 
 
@@ -204,39 +201,39 @@ class VNet(nn.Module):
     #     self.out_tr = OutputTransition(16)
     def forward(self, x,coordmap=None):
         out16 = self.in_tr(x)
-        print('out16',out16.shape)
+        # print('out16',out16.shape)
         out16, _ = self.pe1(out16)
         out32 = self.down_tr32(out16)
-        print('out32',out32.shape)
+        # print('out32',out32.shape)
         out32, _ = self.pe2(out32)
         out64 = self.down_tr64(out32)
-        print('out64',out64.shape)
+        # print('out64',out64.shape)
         out64, _ = self.pe3(out64)
         out128 = self.down_tr128(out64)
-        print('out128',out128.shape)
+        # print('out128',out128.shape)
         out128, _ = self.pe4(out128)
 
         out256 = self.down_tr256(out128)
-        print('out256',out256.shape)
+        # print('out256',out256.shape)
         out256, _ = self.pe5(out256)
 
         out = self.up_tr256(out256, out128)
-        print('out',out.shape)
+        # print('out',out.shape)
         out, _ = self.pe6(out)
 
         out = self.up_tr128(out, out64)
-        print('out',out.shape)
+        # print('out',out.shape)
         out, _ = self.pe7(out)
 
         out = self.up_tr64(out, out32)
-        print('out',out.shape)
+        # print('out',out.shape)
         out, _ = self.pe8(out)
         if (self._coord is True) and (coordmap is not None):
             out = self.up_tr32(out, out16,coordmap=coordmap)
         else:
             out = self.up_tr32(out, out16)
 
-        print('out',out.shape)
+        # print('out',out.shape)
         out, _ = self.pe9(out)
 
 
@@ -244,7 +241,6 @@ class VNet(nn.Module):
         out = self.out_tr(out)
         return out
 if __name__ == '__main__':
-
     net = VNet()  # print(net)
     # print('Number of network parameters:', sum(param.numel() for param in net.parameters()))
     x = torch.ones([2, 1, 64, 64, 64])
