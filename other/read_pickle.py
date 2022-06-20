@@ -22,21 +22,22 @@ def pickleload(file):
 
 if __name__ == '__main__':
     import os
-    data_path1 = r'D:\work\dataSet\Artery\crop_data'
+    data_path1 = r'D:\work\dataSet\Artery\crop_data\\'
     # data_path2 = r'D:\work\dataSet\nodule_data\crop_data'
     data_path2 = r'/home/zhangboyu/dataset/Artery/crop_data/'
 
-    ct_list = [data_path2+i for i in os.listdir(data_path1) if not i.endswith('_label.nii.gz')]
+    # ct_list = [data_path2+i for i in os.listdir(data_path1) if not i.endswith('_label.nii.gz')]
+    ct_list = [data_path1+i for i in os.listdir(data_path1) if not i.endswith('_label.nii.gz')]
     print(len(ct_list))
 
     # print(ct_list)
     # text = pickleload('split_dataset.pickle')
     # print(text)
     num = 90
-    train_list = ct_list[:90]
-    val_list = ct_list[90:]
+    train_list = ct_list[:1]
+    val_list = ct_list[:1]
     # val_list = ct_list[320:]
-    test_list = ct_list[90:]
+    test_list = ct_list[:1]
     print(len(train_list))
     dit= {'train':{'lidc':train_list},
           'val':{'lidc':val_list},

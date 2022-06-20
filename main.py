@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import torch
 import time

@@ -16,7 +16,6 @@ config = {'pad_value': 0,
           'suoxiao': 0,
           'artery': 1,
           'Vnet':0,
-          'OHEM':1
           }
 
 parser = argparse.ArgumentParser(description='PyTorch Airway Segmentation')
@@ -47,9 +46,16 @@ parser.add_argument('--randsel', default=0, type=int, metavar='RandomSelect',
 parser.add_argument('--featsave', default=0, type=int, metavar='FeatSave', help='save SAD features')
 parser.add_argument('--sgd', default=0, type=int, metavar='SGDopti', help='use sgd')
 parser.add_argument('--debugdataloader', default=0, type=int, metavar='DataDebug', help='debug mode for dataloader')
-parser.add_argument('--cubesize', default=[64, 176, 176], nargs="*", type=int, metavar='cube', help='cube size')
+# parser.add_argument('--cubesize', default=[64, 176, 176], nargs="*", type=int, metavar='cube', help='cube size')
+parser.add_argument('--cubesize', default=[64, 64, 64], nargs="*", type=int, metavar='cube', help='cube size')
 # parser.add_argument('--cubesize', default=[68, 68, 68], nargs="*", type=int, metavar='cube', help='cube size')
 parser.add_argument('--cubesizev', default=None, nargs="*", type=int, metavar='cube', help='cube size')
 parser.add_argument('--stridet', default=[64, 64, 64], nargs="*", type=int, metavar='stride', help='split stride train')
 parser.add_argument('--stridev', default=[64, 64, 64], nargs="*", type=int, metavar='stride', help='split stride val')
 parser.add_argument('--multigpu', default=True, type=bool, metavar='mgpu', help='use multiple gpus')
+
+# 优化
+parser.add_argument('--OHEM', default=True, type=bool, metavar='*', help='use OHEM 1000 patch')
+parser.add_argument('--OHEM_num', default=10, type=bool, metavar='*', help='use OHEM 1000 patch')
+
+

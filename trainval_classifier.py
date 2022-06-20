@@ -5,7 +5,7 @@ import time
 import torch
 import torch.nn.functional as F
 from collections import OrderedDict
-
+from data import OHEM_dataset
 from split_combine_mj import SplitComb
 from utils import save_itk, load_itk_image, dice_coef_np, ppv_np, \
     sensitivity_np, acc_np, combine_total_avg, combine_total, normalize_min_max,CosineAnnealingWarmupRestarts,crop
@@ -14,10 +14,16 @@ from torch.cuda import empty_cache
 import csv
 from scipy.ndimage.interpolation import zoom
 import warnings
+from torch.utils.data import DataLoader
+
 warnings.filterwarnings("ignore")
 
 th_bin = 0.5
 
+
+def function(date):
+    # print(date[-1])
+    return date[-1]
 
 def get_lr(epoch, args):
     """
@@ -144,6 +150,75 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
             if i <= 3:
                 print("batch time: {}".format(time.time() - starttime))
 
+    if args.OHEM ==True:
+        print()
+        print('Start OHEM: ')
+        OHEM_list=[]
+
+        torch.cuda.empty_cache()
+        model.eval()
+        with torch.no_grad():
+            for i, (x, y, coord, org, spac, NameID, SplitID, nzhw, ShapeOrg) in enumerate(data_loader):
+
+                x = x.cuda()
+                y = y
+                casePred = model(x, coord)
+
+                for num,pred_one in enumerate(casePred): # [2,2,64,64,64]
+                    pred_one = F.softmax(pred_one,dim=0)
+                    pred_one = np.argmax(pred_one.cpu().data.numpy(),axis=0)
+
+                    y_one = y[num].cpu().data.numpy()
+                    one_loss = dice_coef_np(pred_one, y_one) # 通过dice loss找到难样本
+
+                    e = [x[num].cpu(),
+                         y[num].cpu(),
+                         coord[num].cpu(),
+                         org[num].cpu(),
+                         spac[num].cpu(),
+                         NameID[0][num],
+                         SplitID[0][num],
+                         nzhw[num].cpu(),
+                         ShapeOrg[num].cpu(),
+                         one_loss]
+                    OHEM_list.append(e)
+                    # input('stop')
+
+
+
+            OHEM_list.sort(reverse=True,key=function)
+            if args.OHEM_num < len(OHEM_list):
+                OHEM_list = OHEM_list[:args.OHEM_num]
+
+        model.train()
+        optimizer.zero_grad()
+
+        dataset_OHEM = OHEM_dataset(OHEM_list)
+        OHEM_loader = DataLoader(
+            dataset_OHEM,
+            batch_size=args.batch_size,
+            shuffle=True,
+            num_workers=args.workers,
+            pin_memory=True)
+
+        for i, OHEM_list in enumerate(OHEM_loader):
+            x = OHEM_list[0]
+            y = OHEM_list[1]
+            coord = OHEM_list[2]
+
+            torch.cuda.empty_cache()
+
+            x = x.cuda()
+            y = y.cuda()
+            casePred = model(x, coord)
+            loss = dice_loss(casePred, y)
+            loss += focal_loss(casePred, y)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        print('OHEM over')
 
     scheduler.step()
 

@@ -653,3 +653,10 @@ def augment(sample, label, coord=None, ifflip=True, ifswap=False, ifsmooth=False
 
     return sample, label, coord
 
+class OHEM_dataset(Dataset):
+    def __init__(self,OHEM_list):
+        self.OHEM_list = OHEM_list
+    def __len__(self):
+        return len(self.OHEM_list)
+    def __getitem__(self, idx):
+        return self.OHEM_list[idx]
