@@ -11,22 +11,24 @@ config = {'pad_value': 0,
           'lr': np.array([0.01, 0.001, 0.0001, 0.00001]),
           # 'dataset_path': '/home/zhangboyu/dataset/Artery/crop_data',
           'dataset_path': r'D:\work\dataSet\nodule_data\crop_data',
-          # 'dataset_split': '/home/zhangboyu/project/nodule_seg/other/split_artery.pickle',
-          'dataset_split': r'D:\work\project\nodule_seg\other/split_nodule_all1.pickle',
+          # 'dataset_split': '/home/zhangboyu/nodule_seg/other/split_artery.pickle',
+          'dataset_split': r'D:\work\project\nodule_seg\other/split_artery.pickle',
           'suoxiao': 0,
-          'artery': 1
+          'artery': 1,
+          'Vnet':0,
+          'OHEM':1
           }
 
 parser = argparse.ArgumentParser(description='PyTorch Airway Segmentation')
 parser.add_argument('--model', '-m', metavar='MODEL', default='baseline', help='model')
 parser.add_argument('--out-channels', '-c', default=2, type=int, metavar='N', help='number of output channels')
-# parser.add_argument('--save-dir', default='/home/zhangboyu/project/nodule_seg/working/save_artery', type=str, metavar='SAVE', help='directory to save checkpoint (default: none)')
+# parser.add_argument('--save-dir', default='/home/zhangboyu/nodule_seg/working/save_artery_v', type=str, metavar='SAVE', help='directory to save checkpoint (default: none)')
 parser.add_argument('--save-dir', default='D:\work\project\working\save_test', type=str, metavar='SAVE',help='directory to save checkpoint (default: none)')
 # parser.add_argument('--resume', default='D:\work\project\working\save_dir3/036.ckpt', type=str, metavar='PATH',help='path to latest checkpoint (default: none)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--debugval', default=0, type=int, metavar='Validation', help='debug mode for validation')
-parser.add_argument('-b', '--batch-size', default=4, type=int, metavar='N', help='mini-batch size (default: 16)')
+parser.add_argument('-b', '--batch-size', default=2, type=int, metavar='N', help='mini-batch size (default: 16)')
 
 
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',

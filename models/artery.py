@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import os
-from .model_mj_in3sad import UNet3D as Base
+from models.model_mj_in3sad import UNet3D as Base
 
 
 class ProjectExciteLayer(nn.Module):
@@ -72,7 +72,7 @@ class UNet3D(Base):
 	for pulmonary airway segmentation
 	"""
 
-	def __init__(self, in_channels=1, out_channels=1, coord=True, Dmax=80, Hmax=192, Wmax=304):
+	def __init__(self, in_channels=1, out_channels=1, coord=True, Dmax=64, Hmax=176, Wmax=176):
 		"""
 		:param in_channels: input channel numbers
 		:param out_channels: output channel numbers
@@ -99,37 +99,45 @@ class UNet3D(Base):
 		:return: output segmentation tensor, attention mapping
 		"""
 		conv1 = self.conv1(input)
+		print('conv1:',conv1.shape) # [2, 16, 64, 64, 64]
 		conv1, _ = self.pe1(conv1)
 		x = self.pooling(conv1)
 
 		conv2 = self.conv2(x)
+		print('conv2:',conv2.shape) # [2, 32, 32, 32, 32]
 		conv2, _ = self.pe2(conv2)
 		x = self.pooling(conv2)
 
 		conv3 = self.conv3(x)
+		print('conv3:',conv3.shape) # [2, 64, 16, 16, 16]
 		conv3, mapping3 = self.pe3(conv3)
 		x = self.pooling(conv3)
 
 		conv4 = self.conv4(x)
+		print('conv4:',conv4.shape) # [2, 128, 8, 8, 8]
 		conv4, mapping4 = self.pe4(conv4)
 		x = self.pooling(conv4)
 
 		conv5 = self.conv5(x)
+		print('conv5:',conv5.shape) # [2, 256, 4, 4, 4]
 		conv5, mapping5 = self.pe5(conv5)
 
 		x = self.upsampling(conv5)
 		x = torch.cat([x, conv4], dim=1)
 		conv6 = self.conv6(x)
+		print('conv6:',conv6.shape) # [2, 128, 8, 8, 8]
 		conv6, mapping6 = self.pe6(conv6)
 
 		x = self.upsampling(conv6)
 		x = torch.cat([x, conv3], dim=1)
 		conv7 = self.conv7(x)
+		print('conv7:',conv7.shape) # [2, 64, 16, 16, 16]
 		conv7, mapping7 = self.pe7(conv7)
 
 		x = self.upsampling(conv7)
 		x = torch.cat([x, conv2], dim=1)
 		conv8 = self.conv8(x)
+		print('conv8:',conv8.shape) # [2, 32, 32, 32, 32]
 		conv8, mapping8 = self.pe8(conv8)
 
 		x = self.upsampling(conv8)
@@ -140,6 +148,7 @@ class UNet3D(Base):
 			x = torch.cat([x, conv1], dim=1)
 
 		conv9 = self.conv9(x)
+		print('conv9:',conv9.shape) # [2, 16, 64, 64, 64]
 		conv9, mapping9 = self.pe9(conv9)
 
 		x = self.conv10(conv9)
@@ -149,7 +158,9 @@ class UNet3D(Base):
 
 
 if __name__ == '__main__':
-	net = UNet3D(in_channels=1, out_channels=1)
-	print(net)
-	print('Number of network parameters:', sum(param.numel() for param in net.parameters()))
+	net = UNet3D(in_channels=1, out_channels=2, coord=False,Dmax=64, Hmax=64, Wmax=64)	# print(net)
+	# print('Number of network parameters:', sum(param.numel() for param in net.parameters()))
+	x = torch.ones([2,1,64,64,64])
+	y = net(x)
+	print(y.shape)
 # Number of network parameters: 4231232 Baseline + Feature Recalibration

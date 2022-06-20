@@ -82,10 +82,9 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
         x = x.cuda()
         y = y.cuda()
         ###############################
-
+        # casePred = model(x)
         casePred = model(x,coord)
         # casePred = model(x)
-        # print(casePred)
         if casePred.shape!=y.shape:
             # 68,68,68
             #
@@ -100,27 +99,13 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
 
         if epoch == 1 and i == 0:
             print("Input X shape: {}, Y shape: {}, Output num: {}, Output Shape: {}".format(x.shape, y.shape,
-                                                                                                len(casePred),
+                                                                                  len(casePred),
                                                                                                 casePred.shape))
 
         optimizer.zero_grad()
         loss.backward()
-        # for name, parms in model.named_parameters():
-        #     print('-->name:', name)
-        #     # print('-->para:', parms)
-        #     # print('-->grad_requirs:', parms.requires_grad)
-        #     print('-->grad_value:', parms.grad)
-        #     print("===")
-        #     break
         optimizer.step()
         lossHist.append(loss.item())
-        # for name, parms in model.named_parameters():
-        #     print('-->name:', name)
-        #     print('-->para:', parms[0][0][0])
-        #     # print('-->para:', parms)
-        #
-        #     print("===")
-        #     break
 
 
         if epoch % args.save_freq == 0:
