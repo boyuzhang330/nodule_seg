@@ -654,9 +654,20 @@ def augment(sample, label, coord=None, ifflip=True, ifswap=False, ifsmooth=False
     return sample, label, coord
 
 class OHEM_dataset(Dataset):
-    def __init__(self,OHEM_list):
+    def __init__(self,OHEM_list,OHEM_path):
         self.OHEM_list = OHEM_list
+        self.OHEM_path = OHEM_path
     def __len__(self):
         return len(self.OHEM_list)
     def __getitem__(self, idx):
-        return self.OHEM_list[idx]
+        name = self.OHEM_list[idx][0]
+        x,_,_ = load_itk_image(os.path.join(self.OHEM_path,name+'_x.nii.gz'))
+        y,_,_ = load_itk_image(os.path.join(self.OHEM_path,name+'_y.nii.gz'))
+        x = x[np.newaxis, ...]
+        y = y[np.newaxis, ...]
+        # coord= np.load(os.path.join(self.OHEM_path,name+'_coord.npy'))
+        coord,_,_ = load_itk_image(os.path.join(self.OHEM_path,name+'_coord.nii.gz'))
+
+        return torch.from_numpy(x).float(),\
+               torch.from_numpy(y).float(),\
+               torch.from_numpy(coord).float()

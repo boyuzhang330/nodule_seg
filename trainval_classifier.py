@@ -3,6 +3,7 @@ import pickle
 import os
 import time
 import torch
+import shutil
 import torch.nn.functional as F
 from collections import OrderedDict
 from data import OHEM_dataset
@@ -152,6 +153,10 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
 
     if args.OHEM ==True:
         print()
+        OHEM_path = 'OHEM_save'
+        if os.path.exists(OHEM_path):
+            shutil.rmtree(OHEM_path)
+        os.mkdir(OHEM_path)
         print('Start OHEM: ')
         OHEM_list=[]
 
@@ -159,6 +164,8 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
         model.eval()
         with torch.no_grad():
             for i, (x, y, coord, org, spac, NameID, SplitID, nzhw, ShapeOrg) in enumerate(data_loader):
+                if i <= 3:
+                    print("batch time: {}".format(time.time() - starttime))
 
                 x = x.cuda()
                 y = y
@@ -171,17 +178,28 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
                     y_one = y[num].cpu().data.numpy()
                     one_loss = dice_coef_np(pred_one, y_one) # 通过dice loss找到难样本
 
-                    e = [x[num].cpu(),
-                         y[num].cpu(),
-                         coord[num].cpu(),
-                         org[num].cpu(),
-                         spac[num].cpu(),
-                         NameID[0][num],
-                         SplitID[0][num],
-                         nzhw[num].cpu(),
-                         ShapeOrg[num].cpu(),
-                         one_loss]
+
+                    # print(x[num].shape)
+                    # print(y[num].shape)
+                    # print(coord[num].shape)
+                    # print(one_loss)
+                    # print(NameID[0][num])
+                    # print(SplitID[0][num])
+                    origin = org[num]
+                    spacing = spac[num].data.numpy()
+                    # print(origin)
+                    # print(spacing)
+                    # print(len(spacing))
+
+                    name=NameID[0][num].split('/')[-1]+'_'+str(SplitID[0][num].cpu().data.numpy())
+                    # print(name)
+                    save_itk(x[num][0].cpu().data.numpy(),origin,spacing,os.path.join(OHEM_path,name+'_x.nii.gz'))
+                    save_itk(y[num][0].cpu().data.numpy(),origin,spacing,os.path.join(OHEM_path,name+'_y.nii.gz'))
+                    save_itk(coord[num].cpu().data.numpy(),[1,1,1,1],[1,1,1,1],os.path.join(OHEM_path,name+'_coord.nii.gz'))
+                    # np.save(os.path.join(OHEM_path,name+'_coord.npy'),coord[num].cpu().data.numpy())
+                    e = [name,one_loss]
                     OHEM_list.append(e)
+
                     # input('stop')
 
 
@@ -192,8 +210,9 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
 
         model.train()
         optimizer.zero_grad()
+        print('已找到最难识别的{}个样本'.format(len(OHEM_list)))
 
-        dataset_OHEM = OHEM_dataset(OHEM_list)
+        dataset_OHEM = OHEM_dataset(OHEM_list,OHEM_path)
         OHEM_loader = DataLoader(
             dataset_OHEM,
             batch_size=args.batch_size,
@@ -201,11 +220,7 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
             num_workers=args.workers,
             pin_memory=True)
 
-        for i, OHEM_list in enumerate(OHEM_loader):
-            x = OHEM_list[0]
-            y = OHEM_list[1]
-            coord = OHEM_list[2]
-
+        for i, (x,y,coord) in enumerate(OHEM_loader):
             torch.cuda.empty_cache()
 
             x = x.cuda()

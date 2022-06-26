@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 
 config = {'pad_value': 0,
-          'augtype': {'flip': True, 'swap': False, 'smooth': False, 'jitter': True, 'split_jitter': True},
+          'augtype': {'flip': True, 'swap': False, 'smooth': False, 'jitter': False, 'split_jitter': False},
           'startepoch': 0,
           'lr_stage': np.array([10, 20, 30, 1000000]),
           # 'lr': np.array([3e-3, 3e-4, 3e-5, 3e-6]),
@@ -21,7 +21,7 @@ config = {'pad_value': 0,
 parser = argparse.ArgumentParser(description='PyTorch Airway Segmentation')
 parser.add_argument('--model', '-m', metavar='MODEL', default='baseline', help='model')
 parser.add_argument('--out-channels', '-c', default=2, type=int, metavar='N', help='number of output channels')
-# parser.add_argument('--save-dir', default='/home/zhangboyu/nodule_seg/working/save_artery_v', type=str, metavar='SAVE', help='directory to save checkpoint (default: none)')
+# parser.add_argument('--save-dir', default='/home/zhangboyu/nodule_seg/working/save_artery_OHEM', type=str, metavar='SAVE', help='directory to save checkpoint (default: none)')
 parser.add_argument('--save-dir', default='D:\work\project\working\save_test', type=str, metavar='SAVE',help='directory to save checkpoint (default: none)')
 # parser.add_argument('--resume', default='D:\work\project\working\save_dir3/036.ckpt', type=str, metavar='PATH',help='path to latest checkpoint (default: none)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
@@ -56,6 +56,6 @@ parser.add_argument('--multigpu', default=True, type=bool, metavar='mgpu', help=
 
 # 优化
 parser.add_argument('--OHEM', default=True, type=bool, metavar='*', help='use OHEM 1000 patch')
-parser.add_argument('--OHEM_num', default=10, type=bool, metavar='*', help='use OHEM 1000 patch')
+parser.add_argument('--OHEM_num', default=100, type=bool, metavar='*', help='use OHEM 1000 patch')
 
 

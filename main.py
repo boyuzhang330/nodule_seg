@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,3"
 
 import torch
 import time
@@ -45,7 +45,7 @@ def main():
     print(args.lr_stage,args.lr_preset)
 
     # 实例化SummaryWriter对象
-    tb_writer = SummaryWriter(log_dir='runs/nodule')
+    tb_writer = SummaryWriter(log_dir='runs_ohem/nodule')
 
     if args.resume:
         resume_part = args.resumepart
