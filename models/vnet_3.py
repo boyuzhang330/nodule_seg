@@ -161,7 +161,7 @@ class VNet_3(nn.Module):
     # the number of convolutions in each layer corresponds
     # to what is in the actual prototxt, not the intent
     def __init__(self, elu=True, nll=False,in_channels=1, out_channels=1,coord=True, Dmax=64, Hmax=64, Wmax=64):
-        super(VNet, self).__init__()
+        super(VNet_3, self).__init__()
         self._coord = coord
         self.in_tr = InputTransition(16, elu)
         self.down_tr32 = DownTransition(16, 1, elu)

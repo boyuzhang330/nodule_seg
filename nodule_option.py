@@ -16,6 +16,7 @@ config = {'pad_value': 0,
           'suoxiao': 0,
           'artery': 1,
           'Vnet':0,
+          'Vnet_3':1,
           }
 
 parser = argparse.ArgumentParser(description='PyTorch Airway Segmentation')
