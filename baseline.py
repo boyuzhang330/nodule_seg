@@ -6,7 +6,7 @@ from models.Unet import UNet3D as unet
 from models.artery import UNet3D
 from models.vnet import VNet
 from models.vnet_3 import VNet_3
-
+from models.boundary_aware import UNet3D as ba_unet3d
 # Baseline
 
 def get_model(conf,args=None):
@@ -15,7 +15,8 @@ def get_model(conf,args=None):
             net = VNet(coord=True,Dmax=args.cubesize[0], Hmax=args.cubesize[1], Wmax=args.cubesize[2])
         elif conf['Vnet_3']==1:
             net = VNet_3(coord=True,Dmax=args.cubesize[0], Hmax=args.cubesize[1], Wmax=args.cubesize[2])
-
+        elif conf['boundary_aware']==1:
+            net = ba_unet3d(in_channels=1, out_channels=args.out_channels,coord=True,Dmax=args.cubesize[0], Hmax=args.cubesize[1], Wmax=args.cubesize[2])
         else:
             net = UNet3D(in_channels=1, out_channels=args.out_channels, coord=True, \
                 Dmax=args.cubesize[0], Hmax=args.cubesize[1], Wmax=args.cubesize[2])

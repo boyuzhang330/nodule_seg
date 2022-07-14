@@ -22,7 +22,7 @@ def pickleload(file):
 
 if __name__ == '__main__':
     import os
-    data_path1 = r'D:\work\dataSet\Artery\crop_data\\'
+    data_path1 = r'E:\work\dataSet\Artery\crop_data\\'
     # data_path2 = r'D:\work\dataSet\nodule_data\crop_data'
     data_path2 = r'/home/zhangboyu/dataset/Artery/crop_data/'
 

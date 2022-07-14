@@ -280,7 +280,7 @@ def general_union_loss(pred, target, dist, mask=None):
 def weighted_softmax_cross_entropy_with_logits_ignore_labels(pred, label, pos_weight):
     y = label.clone()
     loss1 = F.cross_entropy(pred, torch.squeeze(y, dim=1).long(), reduction='none')
-    y[y == 1] = 50
+    y[y == 1] = 1000
     y[y == 0] = 1
 
     loss2 = torch.mean(torch.mul(loss1,y))

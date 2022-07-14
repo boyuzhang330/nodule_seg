@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 
 config = {'pad_value': 0,
-          'augtype': {'flip': True, 'swap': False, 'smooth': False, 'jitter': False, 'split_jitter': False},
+          'augtype': {'flip': True, 'swap': False, 'smooth': False, 'jitter': False, 'split_jitter': True},
           'startepoch': 0,
           'lr_stage': np.array([10, 20, 30, 1000000]),
           # 'lr': np.array([3e-3, 3e-4, 3e-5, 3e-6]),
@@ -16,7 +16,8 @@ config = {'pad_value': 0,
           'suoxiao': 0,
           'artery': 1,
           'Vnet':0,
-          'Vnet_3':1,
+          'Vnet_3':0,
+          'boundary_aware':1.
           }
 
 parser = argparse.ArgumentParser(description='PyTorch Airway Segmentation')
@@ -28,7 +29,7 @@ parser.add_argument('--save-dir', default='D:\work\project\working\save_test', t
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 
 parser.add_argument('--debugval', default=0, type=int, metavar='Validation', help='debug mode for validation')
-parser.add_argument('-b', '--batch-size', default=2, type=int, metavar='N', help='mini-batch size (default: 16)')
+parser.add_argument('-b', '--batch-size', default=1, type=int, metavar='N', help='mini-batch size (default: 16)')
 
 
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
@@ -56,7 +57,7 @@ parser.add_argument('--stridev', default=[64, 64, 64], nargs="*", type=int, meta
 parser.add_argument('--multigpu', default=True, type=bool, metavar='mgpu', help='use multiple gpus')
 
 # 优化
-parser.add_argument('--OHEM', default=True, type=bool, metavar='*', help='use OHEM 1000 patch')
+parser.add_argument('--OHEM', default=False, type=bool, metavar='*', help='use OHEM 1000 patch')
 parser.add_argument('--OHEM_num', default=100, type=bool, metavar='*', help='use OHEM 1000 patch')
 
 

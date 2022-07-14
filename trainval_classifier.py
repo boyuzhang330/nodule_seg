@@ -79,7 +79,7 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
     loss = 0.0
     lr = optimizer.state_dict()['param_groups'][0]['lr']
 
-    for i, (x, y, coord, org, spac, NameID, SplitID, nzhw, ShapeOrg) in enumerate(data_loader):
+    for i, (x, y, coord, org, spac, NameID, SplitID, nzhw, ShapeOrg,boundary) in enumerate(data_loader):
         torch.cuda.empty_cache()
 
         if i % int(len(data_loader) / 10 + 1) == 0:
@@ -89,20 +89,19 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
         x = x.cuda()
         y = y.cuda()
         ###############################
-        # casePred = model(x)
-        casePred = model(x,coord)
-        # casePred = model(x)
+        if boundary== None:
+            casePred = model(x,coord)
+        else:
+            casePred,boundary_pred = model(x, coord)
+
         if casePred.shape!=y.shape:
-            # 68,68,68
-            #
             y = crop(y,casePred)
-        # loss = weighted_softmax_cross_entropy_with_logits_ignore_labels(casePred,y,50)
-
         # loss = F.cross_entropy(casePred,torch.squeeze(y, dim=1).long())
-
         loss = dice_loss(casePred, y)
         loss += focal_loss(casePred, y)
 
+        if boundary == None:
+            loss =+ weighted_softmax_cross_entropy_with_logits_ignore_labels(casePred, y, 1000)
 
         if epoch == 1 and i == 0:
             print("Input X shape: {}, Y shape: {}, Output num: {}, Output Shape: {}".format(x.shape, y.shape,
@@ -391,10 +390,11 @@ def val_casenet_per_case(epoch, model, data_loader, args, save_dir):
 
                 casePreds = model(input_cube,input_coord)
                 # casePreds = model(input_cube)
+                if len(casePreds)==2:
+                    casePred=casePreds[0]
+                else:
 
-
-
-                casePred = casePreds
+                    casePred = casePreds
 
                 preds = F.softmax(casePred, dim=1)
                 # 第一种方法

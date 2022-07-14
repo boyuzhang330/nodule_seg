@@ -82,16 +82,16 @@ class NoduleData(Dataset):
                     cursplit = splits[j]
                     labelcube = labels[cursplit[0][0]:cursplit[0][1], cursplit[1][0]:cursplit[1][1],
                                 cursplit[2][0]:cursplit[2][1]]
-                    if config['suoxiao']==1:
-                        curnumlabel = np.sum(labelcube[17:-17,17:-17,17:-17])
+                    if config['suoxiao'] == 1:
+                        curnumlabel = np.sum(labelcube[17:-17, 17:-17, 17:-17])
                         print(curnumlabel)
                     else:
                         curnumlabel = np.sum(labelcube)
 
-
                     labellist.append(curnumlabel)
                     # filter out those zero-0 labels
-                    if curnumlabel > 0 and np.sum(np.array(labelcube.shape) >= np.array(self.split_comber.side_len)) == len(labelcube.shape):
+                    if curnumlabel > 0 and np.sum(
+                            np.array(labelcube.shape) >= np.array(self.split_comber.side_len)) == len(labelcube.shape):
                         curlist = [data_name, cursplit, j, nzhw, orgshape, 'Y']
                         cube_train.append(curlist)
 
@@ -273,9 +273,6 @@ class NoduleData(Dataset):
                torch.from_numpy(curnzhw), torch.from_numpy(curShapeOrg)
 
 
-
-
-
 class NoduleDataSlow(Dataset):
     """
     Generate dataloader
@@ -291,6 +288,7 @@ class NoduleDataSlow(Dataset):
         :param random_select: use partly, randomly chosen data for training
         """
         assert (phase == 'train' or phase == 'val' or phase == 'test')
+        self.config = config
         self.phase = phase
         self.augtype = config['augtype']
         self.split_comber = split_comber
@@ -340,7 +338,6 @@ class NoduleDataSlow(Dataset):
                 print("Name: %s, # of splits: %d" % (data_name, len(splits)))
                 labels, _, _ = load_itk_image(label_path)
 
-
                 # 内存不足，存数组转为存地址。仅训练时使用。
                 # allimgdata_memory[data_name] = [imgs, origin, spacing]
                 # alllabeldata_memory[data_name] = labels
@@ -355,13 +352,14 @@ class NoduleDataSlow(Dataset):
                     cursplit = splits[j]
                     labelcube = labels[cursplit[0][0]:cursplit[0][1], cursplit[1][0]:cursplit[1][1],
                                 cursplit[2][0]:cursplit[2][1]]
-                    if config['suoxiao']==1:
-                        curnumlabel = np.sum(labelcube[17:-17,17:-17,17:-17])
+                    if config['suoxiao'] == 1:
+                        curnumlabel = np.sum(labelcube[17:-17, 17:-17, 17:-17])
                     else:
                         curnumlabel = np.sum(labelcube)
                     labellist.append(curnumlabel)
                     # filter out those zero-0 labels
-                    if curnumlabel > 0 and np.sum(np.array(labelcube.shape) >= np.array(self.split_comber.side_len)) == len(labelcube.shape):
+                    if curnumlabel > 0 and np.sum(
+                            np.array(labelcube.shape) >= np.array(self.split_comber.side_len)) == len(labelcube.shape):
                         curlist = [data_name, cursplit, j, nzhw, orgshape, 'Y']
                         cube_train.append(curlist)
 
@@ -497,10 +495,9 @@ class NoduleDataSlow(Dataset):
             cursplit = augment_split_jittering(cursplit, curShapeOrg)
         ####################################################################
         imginfo = self.allimgdata_memory[curNameID]
-        imgs, origin, spacing = load_itk_image(imginfo)# 读地址
+        imgs, origin, spacing = load_itk_image(imginfo)  # 读地址
         # imgs, origin, spacing = imginfo[0], imginfo[1], imginfo[2]
         curcube = imgs[cursplit[0][0]:cursplit[0][1], cursplit[1][0]:cursplit[1][1], cursplit[2][0]:cursplit[2][1]]
-        # print(curcube)
         curcube = (curcube.astype(np.float32)) / 255.0
         # print(curcube)
         ####################################################################
@@ -519,7 +516,7 @@ class NoduleDataSlow(Dataset):
         assert (coord.shape[0] == 3)
 
         label = self.alllabeldata_memory[curNameID]
-        label,_,_ = load_itk_image(label)# 读地址
+        label, _, _ = load_itk_image(label)  # 读地址
         # label = (label > 0)
         label = label.astype('float')
         label = label[cursplit[0][0]:cursplit[0][1], cursplit[1][0]:cursplit[1][1], cursplit[2][0]:cursplit[2][1]]
@@ -532,18 +529,26 @@ class NoduleDataSlow(Dataset):
         #######################################################################
         ########################Data augmentation##############################
 
-        if self.phase == 'train' and curtransFlag == 'Y':
-            curcube, label, coord = augment(curcube, label, coord,
-                                            ifflip=self.augtype['flip'], ifswap=self.augtype['swap'],
-                                            ifsmooth=self.augtype['smooth'], ifjitter=self.augtype['jitter'])
+        # if self.phase == 'train' and curtransFlag == 'Y':
+        #     curcube, label, coord = augment(curcube, label, coord,
+        #                                     ifflip=self.augtype['flip'], ifswap=self.augtype['swap'],
+        #                                     ifsmooth=self.augtype['smooth'], ifjitter=self.augtype['jitter'])
 
         curcube = curcube[np.newaxis, ...]
         label = label[np.newaxis, ...]
         # print(curNameID, curSplitID, curcube.shape, label.shape)
+        if self.config['boundary_aware'] == 1:
+            boundary_arr_file = imginfo.replace('crop_data', 'boundary')
+            boundart_arr, _, _ = load_itk_image(boundary_arr_file)
+            boundart_arr = boundart_arr.astype('float')
+            boundart_arr = boundart_arr[cursplit[0][0]:cursplit[0][1], cursplit[1][0]:cursplit[1][1],cursplit[2][0]:cursplit[2][1]]
+            boundart_arr = boundart_arr[np.newaxis, ...]
+        else:
+            boundart_arr = None
         return torch.from_numpy(curcube).float(), torch.from_numpy(label).float(), \
                torch.from_numpy(coord).float(), torch.from_numpy(origin), \
                torch.from_numpy(spacing), curNameID, curSplitID, \
-               torch.from_numpy(curnzhw), torch.from_numpy(curShapeOrg)
+               torch.from_numpy(curnzhw), torch.from_numpy(curShapeOrg),torch.from_numpy(boundart_arr).float()
 
 
 def augment_split_jittering(cursplit, curShapeOrg):
@@ -653,21 +658,24 @@ def augment(sample, label, coord=None, ifflip=True, ifswap=False, ifsmooth=False
 
     return sample, label, coord
 
+
 class OHEM_dataset(Dataset):
-    def __init__(self,OHEM_list,OHEM_path):
+    def __init__(self, OHEM_list, OHEM_path):
         self.OHEM_list = OHEM_list
         self.OHEM_path = OHEM_path
+
     def __len__(self):
         return len(self.OHEM_list)
+
     def __getitem__(self, idx):
         name = self.OHEM_list[idx][0]
-        x,_,_ = load_itk_image(os.path.join(self.OHEM_path,name+'_x.nii.gz'))
-        y,_,_ = load_itk_image(os.path.join(self.OHEM_path,name+'_y.nii.gz'))
+        x, _, _ = load_itk_image(os.path.join(self.OHEM_path, name + '_x.nii.gz'))
+        y, _, _ = load_itk_image(os.path.join(self.OHEM_path, name + '_y.nii.gz'))
         x = x[np.newaxis, ...]
         y = y[np.newaxis, ...]
         # coord= np.load(os.path.join(self.OHEM_path,name+'_coord.npy'))
-        coord,_,_ = load_itk_image(os.path.join(self.OHEM_path,name+'_coord.nii.gz'))
+        coord, _, _ = load_itk_image(os.path.join(self.OHEM_path, name + '_coord.nii.gz'))
 
-        return torch.from_numpy(x).float(),\
-               torch.from_numpy(y).float(),\
+        return torch.from_numpy(x).float(), \
+               torch.from_numpy(y).float(), \
                torch.from_numpy(coord).float()
