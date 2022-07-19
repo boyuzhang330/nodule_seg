@@ -129,7 +129,7 @@ def main():
         epoch = 111
         print('start testing')
 
-        testdata,testrecall = val_casenet_per_case(epoch, net, test_loader, args, save_dir)
+        testdata,testrecall = val_casenet_per_case(epoch, net, test_loader, args, save_dir,config)
 
         return
 
@@ -239,7 +239,7 @@ def main():
 
     for epoch in range(start_epoch, end_epoch + 1):
         print("Training epoch: {}".format(epoch))
-        mean_loss, mean_dice, mean_acc, mean_sensiti, mean_ppv= train_casenet(epoch, net, train_loader, optimizer, args,save_dir,scheduler)
+        mean_loss, mean_dice, mean_acc, mean_sensiti, mean_ppv= train_casenet(epoch, net, train_loader, optimizer, args,save_dir,scheduler,config)
 
 
         train_loss.append(mean_loss)
@@ -274,7 +274,7 @@ def main():
         if (epoch % args.val_freq == 0) or (epoch == start_epoch):
             print(save_dir)
             print("Validation epoch: {}".format(epoch))
-            val_dice,val_recall = val_casenet_per_case(epoch, net, val_loader, args, save_dir)
+            val_dice,val_recall = val_casenet_per_case(epoch, net, val_loader, args, save_dir,config)
             print("Validation epoch: {} dice:{}".format(epoch,val_dice))
 
         # 训练结果写入tensorboard

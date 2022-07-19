@@ -158,9 +158,9 @@ class UNet3D(Base):
 
 
 if __name__ == '__main__':
-	net = UNet3D(in_channels=1, out_channels=2, coord=False,Dmax=64, Hmax=64, Wmax=64)	# print(net)
+	net = UNet3D(in_channels=1, out_channels=2, coord=False,Dmax=96, Hmax=96, Wmax=96)	# print(net)
 	# print('Number of network parameters:', sum(param.numel() for param in net.parameters()))
-	x = torch.ones([2,1,64,64,64])
+	x = torch.ones([2,1,96,96,96])
 	y = net(x)
 	print(y.shape)
 # Number of network parameters: 4231232 Baseline + Feature Recalibration

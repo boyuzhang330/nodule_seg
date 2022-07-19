@@ -538,17 +538,17 @@ class NoduleDataSlow(Dataset):
         label = label[np.newaxis, ...]
         # print(curNameID, curSplitID, curcube.shape, label.shape)
         if self.config['boundary_aware'] == 1:
-            boundary_arr_file = imginfo.replace('crop_data', 'boundary')
+            boundary_arr_file = imginfo.replace('crop_data', 'boundary_in')
             boundart_arr, _, _ = load_itk_image(boundary_arr_file)
             boundart_arr = boundart_arr.astype('float')
             boundart_arr = boundart_arr[cursplit[0][0]:cursplit[0][1], cursplit[1][0]:cursplit[1][1],cursplit[2][0]:cursplit[2][1]]
-            boundart_arr = boundart_arr[np.newaxis, ...]
+            boundart_arr = torch.from_numpy(boundart_arr[np.newaxis, ...]).float()
         else:
-            boundart_arr = None
+            boundart_arr = torch.from_numpy(0)
         return torch.from_numpy(curcube).float(), torch.from_numpy(label).float(), \
                torch.from_numpy(coord).float(), torch.from_numpy(origin), \
                torch.from_numpy(spacing), curNameID, curSplitID, \
-               torch.from_numpy(curnzhw), torch.from_numpy(curShapeOrg),torch.from_numpy(boundart_arr).float()
+               torch.from_numpy(curnzhw), torch.from_numpy(curShapeOrg),boundart_arr
 
 
 def augment_split_jittering(cursplit, curShapeOrg):

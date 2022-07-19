@@ -41,7 +41,7 @@ def get_lr(epoch, args):
     return lr
 
 
-def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler):
+def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler,conf):
     """
     :param epoch: current epoch number
     :param model: CNN model
@@ -81,7 +81,6 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
 
     for i, (x, y, coord, org, spac, NameID, SplitID, nzhw, ShapeOrg,boundary) in enumerate(data_loader):
         torch.cuda.empty_cache()
-
         if i % int(len(data_loader) / 10 + 1) == 0:
             print("Epoch: {}, Iteration: {}/{}, loss: {}".format(epoch, i, len(data_loader), loss))
         batchlen = x.size(0)
@@ -89,10 +88,10 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
         x = x.cuda()
         y = y.cuda()
         ###############################
-        if boundary== None:
-            casePred = model(x,coord)
-        else:
+        if conf['boundary_aware']==1:
             casePred,boundary_pred = model(x, coord)
+        else:
+            casePred = model(x,coord)
 
         if casePred.shape!=y.shape:
             y = crop(y,casePred)
@@ -100,8 +99,8 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
         loss = dice_loss(casePred, y)
         loss += focal_loss(casePred, y)
 
-        if boundary == None:
-            loss =+ weighted_softmax_cross_entropy_with_logits_ignore_labels(casePred, y, 1000)
+        if conf['boundary_aware']==1:
+            loss += weighted_softmax_cross_entropy_with_logits_ignore_labels(casePred, y, 1000)
 
         if epoch == 1 and i == 0:
             print("Input X shape: {}, Y shape: {}, Output num: {}, Output Shape: {}".format(x.shape, y.shape,
@@ -291,7 +290,7 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
 
 
 
-def val_casenet_per_case(epoch, model, data_loader, args, save_dir):
+def val_casenet_per_case(epoch, model, data_loader, args, save_dir,conf):
     """
     :param epoch: current epoch number
     :param model: CNN model
