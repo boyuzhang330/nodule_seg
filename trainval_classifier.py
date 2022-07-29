@@ -87,6 +87,7 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
 
         x = x.cuda()
         y = y.cuda()
+
         ###############################
         if conf['boundary_aware']==1:
             casePred,boundary_pred = model(x, coord)
@@ -100,7 +101,8 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
         loss += focal_loss(casePred, y)
 
         if conf['boundary_aware']==1:
-            loss += weighted_softmax_cross_entropy_with_logits_ignore_labels(casePred, y, 1000)
+            boundary = boundary.cuda()
+            loss += weighted_softmax_cross_entropy_with_logits_ignore_labels(boundary_pred, boundary, 1000)
 
         if epoch == 1 and i == 0:
             print("Input X shape: {}, Y shape: {}, Output num: {}, Output Shape: {}".format(x.shape, y.shape,

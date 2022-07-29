@@ -42,11 +42,14 @@ class UNet3D(nn.Module):
             nn.ReLU(inplace=True))
 
         self.conv4 = nn.Sequential(
-            nn.Conv3d(128, 256, kernel_size=3, stride=1, padding=1),
-            nn.InstanceNorm3d(256),
+            nn.Conv3d(128, 128, kernel_size=3, stride=1, padding=1),
+            nn.InstanceNorm3d(128),
             nn.ReLU(inplace=True),
-            nn.Conv3d(256, 256, 3, 1, 1),
-            nn.InstanceNorm3d(256),
+            nn.Conv3d(128, 128, 3, 1, 1),
+            nn.InstanceNorm3d(128),
+            nn.ReLU(inplace=True),
+            nn.ConvTranspose3d(128, 128, 2, 2, 0),
+            nn.InstanceNorm3d(128),
             nn.ReLU(inplace=True))
 
         self.conv5 = nn.Sequential(
@@ -112,14 +115,13 @@ class UNet3D(nn.Module):
         x = self.pooling(conv3)
         conv4 = self.conv4(x)
 
-        x = self.pooling(conv4)
-        conv5 = self.conv5(x)
-        print(conv4.shape)
-        print(conv5.shape)
-        x = torch.cat([conv4, conv5], dim=1)
-        conv6 = self.conv6(x)
+        # x = self.pooling(conv4)
+        # conv5 = self.conv5(x)
 
-        x = torch.cat([conv3, conv6], dim=1)
+        # x = torch.cat([conv4, conv5], dim=1)
+        # conv6 = self.conv6(x)
+
+        x = torch.cat([conv3, conv4], dim=1)
         conv7 = self.conv7(x)
 
         x = torch.cat([conv2, conv7], dim=1)
@@ -140,6 +142,6 @@ if __name__ == '__main__':
     # # print(net)
     # # print('Number of network parameters:', sum(param.numel() for param in net.parameters()))
     dim = 80
-    a = torch.randn([1, 1, 80, 80, 80])
+    a = torch.randn([1, 1, 72, 80, 80])
     b = net(a)
     print(b.shape)

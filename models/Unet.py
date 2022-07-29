@@ -110,3 +110,4 @@ if __name__ == '__main__':
     dim = 68
     a = torch.randn([1, 1, dim, dim, dim])
     b = net(a)
+    print(b.shape)

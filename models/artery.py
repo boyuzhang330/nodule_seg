@@ -123,6 +123,8 @@ class UNet3D(Base):
 		conv5, mapping5 = self.pe5(conv5)
 
 		x = self.upsampling(conv5)
+		print(x.shape)
+		print(conv4.shape)
 		x = torch.cat([x, conv4], dim=1)
 		conv6 = self.conv6(x)
 		# print('conv6:',conv6.shape) # [2, 128, 8, 8, 8]
@@ -158,9 +160,12 @@ class UNet3D(Base):
 
 
 if __name__ == '__main__':
-	net = UNet3D(in_channels=1, out_channels=2, coord=False,Dmax=96, Hmax=96, Wmax=96)	# print(net)
+	z_dim=72
+	y_dim=80
+	x_dim=80
+	net = UNet3D(in_channels=1, out_channels=2, coord=False,Dmax=z_dim, Hmax=y_dim, Wmax=x_dim)	# print(net)
 	# print('Number of network parameters:', sum(param.numel() for param in net.parameters()))
-	x = torch.ones([2,1,96,96,96])
+	x = torch.ones([2,1,z_dim,y_dim,x_dim])
 	y = net(x)
 	print(y.shape)
 # Number of network parameters: 4231232 Baseline + Feature Recalibration

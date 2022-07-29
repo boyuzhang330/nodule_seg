@@ -14,10 +14,10 @@ config = {'pad_value': 0,
           # 'dataset_split': '/home/zhangboyu/nodule_seg/other/split_artery.pickle',
           'dataset_split': r'D:\work\project\nodule_seg\other/split_artery.pickle',
           'suoxiao': 0,
-          'artery': 1,
+          'artery': 0,
           'Vnet':0,
           'Vnet_3':0,
-          'boundary_aware':1.
+          'boundary_aware':0,
           }
 
 parser = argparse.ArgumentParser(description='PyTorch Airway Segmentation')
