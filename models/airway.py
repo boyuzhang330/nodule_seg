@@ -123,8 +123,8 @@ class UNet3D(Base):
 		conv5, mapping5 = self.pe5(conv5)
 
 		x = self.upsampling(conv5)
-		print(x.shape)
-		print(conv4.shape)
+		# print(x.shape)
+		# print(conv4.shape)
 		x = torch.cat([x, conv4], dim=1)
 		conv6 = self.conv6(x)
 		# print('conv6:',conv6.shape) # [2, 128, 8, 8, 8]

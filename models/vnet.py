@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from models.artery import ProjectExciteLayer
+from models.airway import ProjectExciteLayer
 
 def passthrough(x, **kwargs):
     return x

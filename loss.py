@@ -279,26 +279,23 @@ def general_union_loss(pred, target, dist, mask=None):
 
 def weighted_softmax_cross_entropy_with_logits_ignore_labels(pred, label, pos_weight):
     y = label.clone()
+    y = y.cuda()
     loss1 = F.cross_entropy(pred, torch.squeeze(y, dim=1).long(), reduction='none')
-    y[y == 1] = 1000
+    y[y == 1] = 50
     y[y == 0] = 1
-
     loss2 = torch.mean(torch.mul(loss1,y))
-    # loss1 = torch.mean(loss1)
-    # print(loss1.requires_grad)
-    # print(loss2)
-    # print(loss2.requires_grad)
+    weight = torch.tensor([1.0,50.0])
+    weight = torch.tensor([1,50]).cuda()
+    loss2 = F.cross_entropy(pred, torch.squeeze(label, dim=1).long(), weight=weight)
 
-    # print(label)
-    # loss2 = F.cross_entropy(pred, torch.squeeze(label,dim=1).long())
-    # print(loss2)
-    # print(label)
     return loss2
 
 
 if __name__ == '__main__':
-    a = torch.ones([2, 2, 34, 34, 34])
-    b = torch.ones([2, 1, 34, 34, 34])
+    a = torch.from_numpy(np.asarray([[1,1,0,1],[1,1,1,1]]))
+    b = torch.from_numpy(np.asarray([1,1,0,0]))
+    # a = a.cuda()
+    # b = b.cuda()
     torch.squeeze(b)
     print(b.shape)
     c = weighted_softmax_cross_entropy_with_logits_ignore_labels(a, b, 50)

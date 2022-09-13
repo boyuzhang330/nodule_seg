@@ -5,6 +5,7 @@ import time
 import torch
 import shutil
 import torch.nn.functional as F
+import torch.nn
 from collections import OrderedDict
 from data import OHEM_dataset
 from split_combine_mj import SplitComb
@@ -56,6 +57,13 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
     sidelen = args.stridet
     margin = args.cubesize
 
+    criterion = torch.nn.CrossEntropyLoss(
+        weight=torch.from_numpy(np.array([1.0,10.0])).float(),
+        size_average=True)
+    ### 要想使用GPU，此处必须使用cuda()
+    criterion.cuda()
+    ### y为预测结果， tags为原标签
+
     # lr = get_lr(epoch, args)
 
     # print(scheduler)
@@ -79,7 +87,7 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
     loss = 0.0
     lr = optimizer.state_dict()['param_groups'][0]['lr']
 
-    for i, (x, y, coord, org, spac, NameID, SplitID, nzhw, ShapeOrg,boundary) in enumerate(data_loader):
+    for i, (x, y, coord, org, spac, NameID, SplitID, nzhw, ShapeOrg,) in enumerate(data_loader):#boundary
         torch.cuda.empty_cache()
         if i % int(len(data_loader) / 10 + 1) == 0:
             print("Epoch: {}, Iteration: {}/{}, loss: {}".format(epoch, i, len(data_loader), loss))
@@ -92,13 +100,17 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
         if conf['boundary_aware']==1:
             casePred,boundary_pred = model(x, coord)
         else:
-            casePred = model(x,coord)
+            # casePred = model(x,coord)
+            casePred = model(x)
 
         if casePred.shape!=y.shape:
             y = crop(y,casePred)
-        # loss = F.cross_entropy(casePred,torch.squeeze(y, dim=1).long())
-        loss = dice_loss(casePred, y)
-        loss += focal_loss(casePred, y)
+
+        loss = criterion(casePred, torch.squeeze(y, dim=1).long())
+
+        # loss = weighted_softmax_cross_entropy_with_logits_ignore_labels(casePred, y, 50)
+        # loss = dice_loss(casePred, y)
+        # loss += focal_loss(casePred, y)
 
         if conf['boundary_aware']==1:
             boundary = boundary.cuda()
@@ -177,32 +189,14 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
 
                     y_one = y[num].cpu().data.numpy()
                     one_loss = dice_coef_np(pred_one, y_one) # 通过dice loss找到难样本
-
-
-                    # print(x[num].shape)
-                    # print(y[num].shape)
-                    # print(coord[num].shape)
-                    # print(one_loss)
-                    # print(NameID[0][num])
-                    # print(SplitID[0][num])
                     origin = org[num]
                     spacing = spac[num].data.numpy()
-                    # print(origin)
-                    # print(spacing)
-                    # print(len(spacing))
-
                     name=NameID[0][num].split('/')[-1]+'_'+str(SplitID[0][num].cpu().data.numpy())
-                    # print(name)
                     save_itk(x[num][0].cpu().data.numpy(),origin,spacing,os.path.join(OHEM_path,name+'_x.nii.gz'))
                     save_itk(y[num][0].cpu().data.numpy(),origin,spacing,os.path.join(OHEM_path,name+'_y.nii.gz'))
                     save_itk(coord[num].cpu().data.numpy(),[1,1,1,1],[1,1,1,1],os.path.join(OHEM_path,name+'_coord.nii.gz'))
-                    # np.save(os.path.join(OHEM_path,name+'_coord.npy'),coord[num].cpu().data.numpy())
                     e = [name,one_loss]
                     OHEM_list.append(e)
-
-                    # input('stop')
-
-
 
             OHEM_list.sort(reverse=True,key=function)
             if args.OHEM_num < len(OHEM_list):
@@ -235,7 +229,7 @@ def train_casenet(epoch, model, data_loader, optimizer, args, save_dir,scheduler
 
         print('OHEM over')
 
-    scheduler.step()
+    # scheduler.step()
 
     endtime = time.time()
     lossHist = np.array(lossHist)
@@ -331,6 +325,7 @@ def val_casenet_per_case(epoch, model, data_loader, args, save_dir,conf):
     all_recall = 0
 
     print(len(data_loader))
+    # try:
     with torch.no_grad():
         for data_name, data in data_loader.dataset.allimgdata_memory.items():
 
@@ -373,37 +368,26 @@ def val_casenet_per_case(epoch, model, data_loader, args, save_dir,conf):
                     np.linspace(normstart[1], normstart[1] + normsize[1], int(crop_size[1])),
                     np.linspace(normstart[2], normstart[2] + normsize[2], int(crop_size[2])),
                     indexing='ij')
-                coord = np.concatenate([xx[np.newaxis, ...], yy[np.newaxis, ...], zz[np.newaxis, ...]],
-                                       0).astype(
-                    'float')
+                coord = np.concatenate([xx[np.newaxis, ...], yy[np.newaxis, ...], zz[np.newaxis, ...]],0).astype('float')
                 curcube = curcube[np.newaxis, ...]
                 batch.append([curcube, coord])
                 split_coord.append(cursplit)
-                if len(batch) < 5 and i != len(case_cube) - 1:
+                if len(batch) < 4 and i != len(case_cube) - 1:
                     continue
 
                 input_cube = torch.from_numpy(np.array([batch[i][0] for i in range(len(batch))])).float()
                 input_coord = torch.from_numpy(np.array([batch[i][1] for i in range(len(batch))])).float()
 
                  # if torch.cuda.is_available():
-                #     input_cube = input_cube.cuda(config.DATA.GPU_ID)
-                #     input_coord = input_coord.cuda(config.DATA.GPU_ID)
+                 #    input_cube = input_cube.cuda(config.DATA.GPU_ID)
+                 #    input_coord = input_coord.cuda(config.DATA.GPU_ID)
 
-                casePreds = model(input_cube,input_coord)
-                # casePreds = model(input_cube)
-                if len(casePreds)==2:
-                    casePred=casePreds[0]
-                else:
-
-                    casePred = casePreds
+                # casePreds = model(input_cube,input_coord)
+                casePreds = model(input_cube)
+                casePred = casePreds
 
                 preds = F.softmax(casePred, dim=1)
-                # 第一种方法
                 outdatabw = np.argmax(preds.cpu().data.numpy(), axis=1)  # (B, D, H, W)
-                # 第二种方法 置信度
-                # preds=preds[:,1,:,:,:]
-                # preds[preds>zhixin]=1
-                # outdatabw=preds.cpu().data.numpy()
                 for k in range(len(batch)):
                     cursplit = split_coord[k]
                     try:
@@ -412,7 +396,6 @@ def val_casenet_per_case(epoch, model, data_loader, args, save_dir,conf):
                     except:
                         output[cursplit[0][0]+17:cursplit[0][1]-17, cursplit[1][0]+17:cursplit[1][1]-17,
                         cursplit[2][0]+17:cursplit[2][1]-17] = outdatabw[k]
-
                 batch = []
                 split_coord = []
 
@@ -445,7 +428,9 @@ def val_casenet_per_case(epoch, model, data_loader, args, save_dir,conf):
                 row = ['name:',data_name,'dice:',mean_dice]
                 writer.writerow(row)
             del y_combine, p_combine_bw
-            # except:
-            #     print(data_name,'error')
+                # except:
+                #     print(data_name,'error')
+    # except:
+    #     print(data_name)
 
     return all_dice/len(dice_total),all_recall/len(dice_total)

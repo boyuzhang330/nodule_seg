@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import torch
 import time
@@ -108,7 +108,7 @@ def main():
     #     optimizer = optim.Adam(net.parameters(), lr=1e-3)  # args.lr
     # else:
     #     optimizer = optim.SGD(net.parameters(), lr=1e-3, momentum=0.9)
-    optimizer = optim.Adam(net.parameters(), lr=1e-3)
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
     if args.test:
         print('---------------------testing---------------------')
         # type='train'
@@ -229,8 +229,8 @@ def main():
                                               first_cycle_steps=20,
                                               cycle_mult=1.0,
                                               max_lr=0.01,
-                                              min_lr=0.0001,
-                                              warmup_steps=5,
+                                              min_lr=0.001,
+                                              warmup_steps=2,
                                               gamma=0.5)
 
     # 将模型写入tensorboard
